@@ -487,6 +487,53 @@ task checkDeps << {
     }
 
     @Test
+    void "can choose not to resolve conflicts"() {
+        repo.module("org", "external", "1.0").publish()
+        repo.module("org", "external", "1.1").publish()
+        repo.module("org", "external", "1.2").publish()
+
+        repo.module("org", "dep", "2.2").dependsOn("org", "external", "1.0").publish()
+        repo.module("org", "dep", "3.0").dependsOn("org", "external", "1.1").publish()
+
+        repo.module("org", "coolDep", "5.0").dependsOn("org", "external", "1.2").dependsOn("org", "dep", "2.2").publish()
+
+        /*
+        -dep 3.0
+          -external 1.1
+        -coolDep 3.0
+          -external 1.2
+          -dep 2.2
+            -external 1.0
+        */
+
+        def buildFile = file("build.gradle")
+        buildFile << """
+repositories {
+    maven { url "${repo.uri}" }
+}
+
+configurations {
+    compile
+    compile.resolutionStrategy.noConflictResolution()
+}
+
+dependencies {
+    compile 'org:dep:3.0'
+    compile 'org:coolDep:5.0'
+}
+
+task checkDeps << {
+    def expected = ['coolDep-5.0.jar', 'dep-2.2.jar', 'dep-3.0.jar', 'external-1.0.jar','external-1.1.jar','external-1.2.jar']
+    assert configurations.compile*.name.containsAll(expected)
+    assert configurations.compile*.name.size() == expected.size()
+}
+"""
+
+        //expect
+        executer.withTasks("dependencies", "checkDeps").run()
+    }
+
+    @Test
     void "resolves dynamic dependency before resolving conflict"() {
         repo.module("org", "external", "1.2").publish()
         repo.module("org", "external", "1.4").publish()

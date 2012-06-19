@@ -202,15 +202,19 @@ class MavenModule {
                 pomFile << "\n$parentPomSection\n"
             }
 
+        if (!dependencies.empty) {
+            pomFile << """
+      <dependencies>"""
             dependencies.each { dependency ->
                 pomFile << """
-  <dependencies>
-    <dependency>
-      <groupId>$dependency.groupId</groupId>
-      <artifactId>$dependency.artifactId</artifactId>
-      <version>$dependency.version</version>
-    </dependency>3.2.1
-  </dependencies>"""
+        <dependency>
+          <groupId>$dependency.groupId</groupId>
+          <artifactId>$dependency.artifactId</artifactId>
+          <version>$dependency.version</version>
+        </dependency>"""
+            }
+            pomFile << """
+      </dependencies>"""
         }
 
             pomFile << "\n</project>"

@@ -19,6 +19,7 @@ import org.gradle.api.artifacts.ResolveException;
 import org.gradle.api.artifacts.ResolvedConfiguration;
 import org.gradle.api.internal.artifacts.ArtifactDependencyResolver;
 import org.gradle.api.internal.artifacts.configurations.ConfigurationInternal;
+import org.gradle.api.internal.artifacts.configurations.conflicts.LatestConflictResolution;
 import org.gradle.api.internal.artifacts.configurations.conflicts.StrictConflictResolution;
 import org.gradle.api.internal.artifacts.ivyservice.*;
 import org.gradle.api.internal.artifacts.ivyservice.clientmodule.ClientModuleResolver;
@@ -57,10 +58,13 @@ public class DefaultDependencyResolver implements ArtifactDependencyResolver {
         idResolver = new VersionForcingDependencyToModuleResolver(idResolver, configuration.getResolutionStrategy().getForcedModules());
 
         ModuleConflictResolver conflictResolver;
+        //TODO SF - refactor those instanceofs
         if (configuration.getResolutionStrategy().getConflictResolution() instanceof StrictConflictResolution) {
             conflictResolver = new StrictConflictResolver();
-        } else {
+        } else if (configuration.getResolutionStrategy().getConflictResolution() instanceof LatestConflictResolution) {
             conflictResolver = new LatestModuleConflictResolver();
+        } else {
+            conflictResolver = new NoOpConflictResolver();
         }
 
         DependencyGraphBuilder builder = new DependencyGraphBuilder(moduleDescriptorConverter, resolvedArtifactFactory, idResolver, conflictResolver);

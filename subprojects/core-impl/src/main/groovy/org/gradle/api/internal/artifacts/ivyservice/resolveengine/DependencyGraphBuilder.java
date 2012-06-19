@@ -122,11 +122,16 @@ public class DependencyGraphBuilder {
                 conflicts.remove(moduleId);
                 ModuleResolveState module = resolveState.getModule(moduleId);
                 DefaultModuleRevisionResolveState selected = conflictResolver.select(module.getVersions(), resolveState.root.moduleRevision);
-                LOGGER.debug("Selected {} from conflicting modules {}.", selected, module.getVersions());
 
                 // Restart each configuration. For the evicted configuration, this means moving incoming dependencies across to the
                 // matching selected configuration. For the select configuration, this mean traversing its dependencies.
-                module.restart(selected);
+                if (selected == null) {
+                    LOGGER.debug("Nothing selected to resolve conflict between modules {}.", module.getVersions());
+                    module.restartAll();
+                } else {
+                    LOGGER.debug("Selected {} from conflicting modules {}.", selected, module.getVersions());
+                    module.restartSelected(selected);
+                }
             }
         }
     }
@@ -511,13 +516,24 @@ public class DependencyGraphBuilder {
             return previousSelection;
         }
 
-        public void restart(DefaultModuleRevisionResolveState selected) {
+        public void restartSelected(DefaultModuleRevisionResolveState selected) {
             select(selected);
             for (DefaultModuleRevisionResolveState version : versions.values()) {
                 version.restart(selected);
             }
             for (DependencyEdge dependency : new ArrayList<DependencyEdge>(unattachedDependencies)) {
                 dependency.restart(selected);
+            }
+            unattachedDependencies.clear();
+        }
+
+        public void restartAll() {
+            for (DefaultModuleRevisionResolveState version : versions.values()) {
+                version.state = ModuleState.Selected;
+                version.restart(version);
+            }
+            for (DependencyEdge dependency : new ArrayList<DependencyEdge>(unattachedDependencies)) {
+                dependency.restart(dependency.targetModuleRevision);
             }
             unattachedDependencies.clear();
         }

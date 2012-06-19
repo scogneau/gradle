@@ -21,6 +21,7 @@ import org.gradle.api.artifacts.ModuleVersionSelector;
 import org.gradle.api.artifacts.ResolutionStrategy;
 import org.gradle.api.artifacts.cache.ResolutionRules;
 import org.gradle.api.internal.artifacts.configurations.conflicts.LatestConflictResolution;
+import org.gradle.api.internal.artifacts.configurations.conflicts.NoConflictResolution;
 import org.gradle.api.internal.artifacts.configurations.conflicts.StrictConflictResolution;
 import org.gradle.api.internal.artifacts.configurations.dynamicversion.CachePolicy;
 import org.gradle.api.internal.artifacts.configurations.dynamicversion.DefaultCachePolicy;
@@ -44,6 +45,11 @@ public class DefaultResolutionStrategy implements ResolutionStrategyInternal {
 
     public ResolutionStrategy failOnVersionConflict() {
         this.conflictResolution = new StrictConflictResolution();
+        return this;
+    }
+
+    public ResolutionStrategy noConflictResolution() {
+        this.conflictResolution = new NoConflictResolution();
         return this;
     }
 
