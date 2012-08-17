@@ -16,10 +16,14 @@
 
 package org.gradle.api.internal.dependencygraph.api;
 
+import java.util.Set;
+
 /**
  * by Szczepan Faber, created at: 8/10/12
  */
 public interface DependencyGraph {
 
     ResolvedModuleVersionResult getRoot();
+
+    Set<? extends ResolvedDependencyResult> getAllDependencies();
 }

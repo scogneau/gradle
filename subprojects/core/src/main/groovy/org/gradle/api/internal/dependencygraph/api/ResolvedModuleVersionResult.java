@@ -29,4 +29,5 @@ public interface ResolvedModuleVersionResult {
 
     Set<? extends ResolvedDependencyResult> getDependencies();
 
+    Set<? extends ResolvedModuleVersionResult> getDependees();
 }

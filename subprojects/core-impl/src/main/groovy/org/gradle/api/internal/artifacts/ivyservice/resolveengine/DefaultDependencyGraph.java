@@ -17,20 +17,38 @@
 package org.gradle.api.internal.artifacts.ivyservice.resolveengine;
 
 import org.gradle.api.internal.dependencygraph.api.DependencyGraph;
+import org.gradle.api.internal.dependencygraph.api.ResolvedDependencyResult;
 import org.gradle.api.internal.dependencygraph.api.ResolvedModuleVersionResult;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * by Szczepan Faber, created at: 8/10/12
  */
 public class DefaultDependencyGraph implements DependencyGraph {
 
-    private final ResolvedModuleVersionResult result;
+    private final ResolvedModuleVersionResult root;
 
-    public DefaultDependencyGraph(ResolvedModuleVersionResult result) {
-        this.result = result;
+    public DefaultDependencyGraph(ResolvedModuleVersionResult root) {
+        assert root != null;
+        this.root = root;
     }
 
     public ResolvedModuleVersionResult getRoot() {
-        return result;
+        return root;
+    }
+
+    public Set<? extends ResolvedDependencyResult> getAllDependencies() {
+        Set<ResolvedDependencyResult> out = new LinkedHashSet<ResolvedDependencyResult>();
+        collectDependencies(root, out);
+        return out;
+    }
+
+    private void collectDependencies(ResolvedModuleVersionResult node, Set<ResolvedDependencyResult> out) {
+        for (ResolvedDependencyResult d : node.getDependencies()) {
+            collectDependencies(d.getSelected(), out);
+            out.add(d);
+        }
     }
 }

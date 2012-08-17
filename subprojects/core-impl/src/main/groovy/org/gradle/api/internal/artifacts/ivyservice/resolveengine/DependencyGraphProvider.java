@@ -83,8 +83,8 @@ public class DependencyGraphProvider implements ResolvedConfigurationListener {
         for (DefaultResolvedDependencyResult sel : theDeps.values()) {
             //recursively feed with the dependencies
             buildNode(sel, visited);
-            //add dependency to the currently built node
-            node.addDependency(sel);
+            //add dependency and the dependee
+            node.linkDependency(sel);
         }
 
         return node;
