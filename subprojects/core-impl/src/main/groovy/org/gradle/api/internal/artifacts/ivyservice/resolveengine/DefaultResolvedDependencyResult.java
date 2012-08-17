@@ -18,6 +18,7 @@ package org.gradle.api.internal.artifacts.ivyservice.resolveengine;
 
 import org.gradle.api.artifacts.ModuleVersionIdentifier;
 import org.gradle.api.artifacts.ModuleVersionSelector;
+import org.gradle.api.internal.artifacts.dependencygraph.ResolvedDependencyResultPrinter;
 import org.gradle.api.internal.dependencygraph.api.ResolvedDependencyResult;
 
 import java.util.Collection;
@@ -99,7 +100,7 @@ public class DefaultResolvedDependencyResult implements ResolvedDependencyResult
 
     @Override
     public String toString() {
-        return selection.requested.getGroup() + ":" + selection.requested.getName() + ":" + selection.requested.getVersion();
+        return ResolvedDependencyResultPrinter.print(this);
     }
 
     //TODO SF tests
