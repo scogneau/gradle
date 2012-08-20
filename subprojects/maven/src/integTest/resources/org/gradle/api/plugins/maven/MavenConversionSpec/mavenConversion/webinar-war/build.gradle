@@ -1,0 +1,9 @@
+
+
+description = 'Webinar web application'
+
+apply plugin: 'war'
+
+dependencies {
+  compile project(':webinar-impl')
+  }

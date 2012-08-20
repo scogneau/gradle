@@ -32,20 +32,14 @@ class Maven2Gradle {
   def dependentWars = []
   def qualifiedNames
   def workingDir
-  def effectiveSettings
   def effectivePom
-
-  public static void main(String[] args) {
-    new Maven2Gradle().convert(args)
-  }
 
   def convert(String[] args) {
     workingDir = new File('.').canonicalFile
     println "Working path:" + workingDir.absolutePath + "\n"
 
     // use the Groovy XmlSlurper library to parse the text string
-    effectivePom = new XmlSlurper().parseText(geEffectiveContents('pom', args))
-    effectiveSettings = new XmlSlurper().parseText(geEffectiveContents('settings', args))
+    effectivePom = new XmlSlurper().parseText(geEffectivePom(args))
     String build
     def multimodule = effectivePom.name() == "projects"
 
@@ -164,7 +158,7 @@ ${globalExclusions(effectivePom)}
       Set<String> repoSet = new LinkedHashSet<String>();
       getRepositoriesForModule(effectivePom, repoSet)
       String repos = """repositories {
-        $localRepoUri
+        $localRepo
 """
       repoSet.each {
         repos = "${repos} ${it}\n"
@@ -248,17 +242,8 @@ ${globalExclusions(effectivePom)}
   }
 
 
-  def localRepoUri = {
-    //we have local maven repo full with good stuff. Let's reuse it!
-    String userHome = System.properties['user.home']
-    userHome = userHome.replaceAll('\\\\', '/')
-    def localRepoUri = new File(effectiveSettings.localRepository.text()).toURI().toString()
-    if (localRepoUri.contains(userHome)) {
-      localRepoUri = localRepoUri.replace(userHome, '${System.properties[\'user.home\']}')
-    }
-    //in URI format there is one slash after file, while  Gradle needs two
-    localRepoUri = localRepoUri.replace('file:/', 'file://')
-    """mavenRepo url: \"${localRepoUri}\"
+  def getLocalRepo() {
+    """mavenLocal()
     """
   }
 
@@ -271,7 +256,7 @@ ${globalExclusions(effectivePom)}
   private String getRepositoriesForProjects(projects) {
     print 'Configuring Repositories... '
     String repos = """repositories {
-    ${localRepoUri()}
+    ${localRepo}
 """
     def repoSet = new LinkedHashSet<String>();
     projects.each {
@@ -497,17 +482,17 @@ project('$entry.key').projectDir = """ + '"$rootDir/' + "${entry.value}" + '" as
     return qualifiedNames
   }
 
-  String geEffectiveContents(String file, String[] args) {
+  String geEffectivePom(String[] args) {
 //TODO work on output stream, without writing to file
-    def fileName = "effective-${file}.xml"
-    print "Wait, obtaining effective $file... "
+    def fileName = "effective-pome.xml"
+    print "Wait, obtaining effective pom... "
 
     def ant = new AntBuilder()   // create an antbuilder
     ant.exec(outputproperty: "cmdOut",
             errorproperty: "cmdErr",
             failonerror: "true",
             executable: ((String) System.properties['os.name']).toLowerCase().contains("win") ? "mvn.bat" : "mvn") {
-      arg(line: """-Doutput=${fileName} help:effective-$file""")
+      arg(line: """-Doutput=${fileName} help:effective-pom""")
       env(key: "JAVA_HOME", value: System.getProperty("java.home"))
     }
 

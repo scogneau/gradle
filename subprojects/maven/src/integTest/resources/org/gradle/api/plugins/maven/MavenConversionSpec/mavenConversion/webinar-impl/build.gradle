@@ -1,0 +1,7 @@
+
+
+description = 'Webinar implementation'
+
+dependencies {
+  compile project(':webinar-api')
+  }
