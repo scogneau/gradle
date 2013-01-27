@@ -64,29 +64,37 @@ class DistributionPlugin implements Plugin<Project> {
     void addValidation() {
         project.afterEvaluate {
             extension.all { distribution ->
-                if (distribution.name == null || distribution.name.equals("")) {
-                    throw new IllegalArgumentException("Distribution name must not be null or empty ! Check your configuration of the distribution plugin.")
+                if (distribution.baseName == null || distribution.baseName.equals("")) {
+                    throw new IllegalArgumentException("Distribution baseName must not be null or empty ! Check your configuration of the distribution plugin. :"+distribution.name)
                 }
             }
         }
     }
 
     void addPluginExtension() {
-        extension = new DefaultDistributionsContainer(Distribution.class, instantiator)
-        extension.all { dist -> addTask(dist) }
-        extension.create(MAIN_DISTRIBUTION_NAME)
+        extension = new DefaultDistributionsContainer(Distribution.class, instantiator,project.fileResolver)
+        extension.all { dist -> dist.baseName = project.name+"-"+ dist.name;addTask(dist)}
+        Distribution distribution = extension.create(MAIN_DISTRIBUTION_NAME)
+        distribution.baseName = project.name
         project.extensions.add("distributions", extension)
     }
 
     void addTask(Distribution distribution) {
         def taskName = TASK_DIST_ZIP_NAME
+        def into = project.name
         if (!MAIN_DISTRIBUTION_NAME.equals(distribution.name)) {
             taskName = distribution.name + "DistZip"
+            into =  distribution.baseName+"-"+project.version;
         }
         def distZipTask = project.tasks.add(taskName, Zip)
         distZipTask.description = "Bundles the project as a distribution."
         distZipTask.group = DISTRIBUTION_GROUP
-        distZipTask.conventionMapping.baseName = { distribution.name }
+        distZipTask.conventionMapping.baseName = { distribution.baseName }
+        distZipTask.conventionMapping.version = { project.version != Project.DEFAULT_VERSION? project.version.toString() : null }
+        distZipTask.into(into) {
+            from { "src/main/"+distribution.name}
+            with(distribution.contents)
+        }
 
     }
 

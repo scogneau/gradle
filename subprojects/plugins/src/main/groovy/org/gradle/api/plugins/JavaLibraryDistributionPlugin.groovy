@@ -30,29 +30,20 @@ import org.gradle.api.distribution.plugins.DistributionPlugin
  */
 @Incubating
 class JavaLibraryDistributionPlugin implements Plugin<Project> {
-    static final String TASK_DIST_ZIP_NAME = "distZip"
 
     private Project project
-    Distribution extension
 
     public void apply(Project project) {
         this.project = project
         project.plugins.apply(JavaPlugin)
         project.plugins.apply(DistributionPlugin)
-        addPluginExtension()
         configureDistZipTask()
     }
 
-    private void addPluginExtension() {
-        extension = project.distributions[DistributionPlugin.MAIN_DISTRIBUTION_NAME]
-        project.extensions.add("distribution", extension);
-        extension.name = project.name
-    }
-
     private void configureDistZipTask() {
-        def distZipTask = project.tasks.getByName(TASK_DIST_ZIP_NAME)
+        def contents  = project.distributions[DistributionPlugin.MAIN_DISTRIBUTION_NAME].contents
         def jar = project.tasks[JavaPlugin.JAR_TASK_NAME]
-        distZipTask.with {
+        contents.with {
             from(jar)
             from(project.file("src/dist"))
             into("lib") {

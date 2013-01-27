@@ -45,19 +45,30 @@ class DistributionPluginTest extends Specification{
 		then:
 		def task = project.tasks[DistributionPlugin.TASK_DIST_ZIP_NAME]
 		task instanceof Zip
-		task.archiveName == "${project.distributions[DistributionPlugin.MAIN_DISTRIBUTION_NAME].name}.zip"
+		task.archiveName == "${project.distributions[DistributionPlugin.MAIN_DISTRIBUTION_NAME].baseName}.zip"
 	}
 
 
 	public void "distribution name is configurable"() {
 		when:
 		plugin.apply(project)
-		project.distributions[DistributionPlugin.MAIN_DISTRIBUTION_NAME].name = "SuperApp";
+		project.distributions[DistributionPlugin.MAIN_DISTRIBUTION_NAME].baseName = "SuperApp";
 
 		then:
 		def distZipTask = project.tasks[DistributionPlugin.TASK_DIST_ZIP_NAME]
 		distZipTask.archiveName == "SuperApp.zip"
 	}
+
+    public void "default distribution baseName is project name "() {
+        when:
+        plugin.apply(project)
+
+        then:
+        Distribution mainDistribution = project.distributions[DistributionPlugin.MAIN_DISTRIBUTION_NAME]
+        mainDistribution.name == DistributionPlugin.MAIN_DISTRIBUTION_NAME;
+        mainDistribution.baseName == project.name;
+
+    }
 
 
 }

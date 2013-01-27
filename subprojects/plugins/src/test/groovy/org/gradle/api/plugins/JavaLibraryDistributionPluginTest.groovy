@@ -32,9 +32,8 @@ class JavaLibraryDistributionPluginTest extends Specification {
 
         then:
         project.plugins.hasPlugin(JavaPlugin.class)
-        project.extensions.getByType(Distribution.class) != null
         project.plugins.hasPlugin(DistributionPlugin.class)
-        project.distribution.name == project.name
+        project.plugins[DistributionPlugin.DISTRIBUTION_PLUGIN_NAME].extension[DistributionPlugin.MAIN_DISTRIBUTION_NAME].baseName == project.name
 
     }
 
@@ -43,18 +42,18 @@ class JavaLibraryDistributionPluginTest extends Specification {
         plugin.apply(project)
 
         then:
-        def task = project.tasks[JavaLibraryDistributionPlugin.TASK_DIST_ZIP_NAME]
+        def task = project.tasks[DistributionPlugin.TASK_DIST_ZIP_NAME]
         task instanceof Zip
-        task.archiveName == "${project.distribution.name}.zip"
+        task.archiveName == "${project.plugins[DistributionPlugin.DISTRIBUTION_PLUGIN_NAME].extension[DistributionPlugin.MAIN_DISTRIBUTION_NAME].baseName}.zip"
     }
 
     public void "distribution name is configurable"() {
         when:
         plugin.apply(project)
-        project.distribution.name = "SuperApp";
+        project.plugins[DistributionPlugin.DISTRIBUTION_PLUGIN_NAME].extension[DistributionPlugin.MAIN_DISTRIBUTION_NAME].baseName = "SuperApp";
 
         then:
-        def distZipTask = project.tasks[JavaLibraryDistributionPlugin.TASK_DIST_ZIP_NAME]
+        def distZipTask = project.tasks[DistributionPlugin.TASK_DIST_ZIP_NAME]
         distZipTask.archiveName == "SuperApp.zip"
     }
 }

@@ -16,8 +16,11 @@
 
 package org.gradle.api.distribution;
 
+import groovy.lang.Closure;
 import org.gradle.api.Named;
 import org.gradle.api.Incubating;
+import org.gradle.api.file.CopySpec;
+
 /**
  * A distribution allow to bundle an application or a library including dependencies,sources...
  * @author scogneau
@@ -25,4 +28,16 @@ import org.gradle.api.Incubating;
 @Incubating
 public interface Distribution extends Named {
     String getName();
+
+    String getBaseName();
+
+    void setBaseName(String baseName);
+
+    CopySpec getContents();
+
+    void setContents(CopySpec contents);
+
+    CopySpec contents(Closure contents);
+
+
 }

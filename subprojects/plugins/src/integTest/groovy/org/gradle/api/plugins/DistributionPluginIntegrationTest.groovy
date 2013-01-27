@@ -55,10 +55,13 @@ class DistributionPluginIntegrationTest extends WellBehavedPluginTest {
 
 
             distributions {
-    custom{
-        name=customName
-    }
-}
+                custom{
+                    baseName=customName
+                    contents {
+                        from { }
+                    }
+                }
+            }
             distZip{
 
             }
@@ -76,16 +79,217 @@ class DistributionPluginIntegrationTest extends WellBehavedPluginTest {
 
             distributions {
     custom{
-        name=''
-    }
-}
+        baseName=''
+        contents {
+            from {}
+                    }
+                }
+            }
             distZip{
 
             }
             """
         then:
-        runAndFail('DistZip')
-        failure.assertThatDescription(containsString("Distribution name must not be null or empty ! Check your configuration of the distribution plugin."))
+        runAndFail('customDistZip')
+        failure.assertThatDescription(containsString("Distribution baseName must not be null or empty ! Check your configuration of the distribution plugin."))
+    }
+
+
+
+    def createDistributionWithoutVersion() {
+        given:
+        createDir('src/main/dist') {
+            file 'file1.txt'
+            dir2 {
+                file 'file2.txt'
+            }
+        }
+        and:
+        buildFile << """
+            apply plugin:'distribution'
+
+
+            distributions {
+                main{
+                    baseName='myDistribution'
+                }
+            }
+            distZip{
+
+            }
+            """
+        when:
+        run('distZip')
+        then:
+        file('myDistribution.zip').exists()
+    }
+
+    def createDistributionWithVersion() {
+        given:
+        createDir('src/main/dist') {
+            file 'file1.txt'
+            dir2 {
+                file 'file2.txt'
+            }
+        }
+        and:
+        buildFile << """
+            apply plugin:'distribution'
+
+            version = '1.2'
+            distributions {
+                main{
+                    baseName='myDistribution'
+                }
+            }
+            distZip{
+
+            }
+            """
+        when:
+        run('distZip')
+        then:
+        file('myDistribution-1.2.zip').exists()
+    }
+
+    def createDistributionWithoutBaseNameAndVersion() {
+        given:
+        createDir('src/main/dist') {
+            file 'file1.txt'
+            dir2 {
+                file 'file2.txt'
+            }
+        }
+        and:
+        settingsFile << "rootProject.name='myProject'"
+        and:
+        buildFile << """
+            apply plugin:'distribution'
+
+            """
+        when:
+        run('distZip')
+        then:
+        file('myProject.zip').exists()
+    }
+
+    def createDistributionWithoutBaseNameAndWithVersion() {
+        given:
+        createDir('src/main/dist') {
+            file 'file1.txt'
+            dir2 {
+                file 'file2.txt'
+            }
+        }
+        and:
+        settingsFile << "rootProject.name='myProject'"
+        and:
+        buildFile << """
+            apply plugin:'distribution'
+
+            version = 1.2
+            """
+        when:
+        run('distZip')
+        then:
+        file('myProject-1.2.zip').exists()
+    }
+
+    def createCreateArchiveForCustomDistribution(){
+        given:
+        createDir('src/main/custom') {
+            file 'file1.txt'
+            dir2 {
+                file 'file2.txt'
+            }
+        }
+        and:
+        settingsFile << "rootProject.name='myProject'"
+        and:
+        buildFile << """
+            apply plugin:'distribution'
+
+            distributions{
+                custom
+            }
+            """
+        when:
+        run('customDistZip')
+        then:
+        file('myProject-custom.zip').exists()
+    }
+
+
+    def includeFileFromSrcMainCustom() {
+        given:
+        createDir('src/main/custom'){
+            file 'file1.txt'
+            dir {
+                file 'file2.txt'
+            }
+        }
+        and:
+        settingsFile << "rootProject.name='myProject'"
+        and:
+        buildFile << """
+            apply plugin:'distribution'
+
+            version = 1.2
+
+            distributions{
+                custom
+            }
+            """
+        when:
+        run('customDistZip')
+        then:
+        file('myProject-custom-1.2.zip').exists()
+        def expandDir = file('expanded')
+        file('myProject-custom-1.2.zip').unzipTo(expandDir)
+        expandDir.assertHasDescendants('myProject-custom-1.2/file1.txt','myProject-custom-1.2/dir/file2.txt')
+    }
+
+    def includeFileFromDistContent() {
+        given:
+        createDir('src/main/custom'){
+            file 'file1.txt'
+            dir {
+                file 'file2.txt'
+            }
+        }
+        createDir("docs"){
+            file 'file3.txt'
+            dir2 {
+                file 'file4.txt'
+            }
+        }
+        and:
+        settingsFile << "rootProject.name='myProject'"
+        and:
+        buildFile << """
+            apply plugin:'distribution'
+
+            version = 1.2
+
+            distributions{
+                custom {
+                    contents {
+                        from ( 'docs' ){
+                            into 'docs'
+                        }
+
+
+                    }
+                }
+            }
+            """
+        when:
+        run('customDistZip')
+        then:
+        file('myProject-custom-1.2.zip').exists()
+        def expandDir = file('expanded')
+        file('myProject-custom-1.2.zip').unzipTo(expandDir)
+        expandDir.assertHasDescendants('myProject-custom-1.2/file1.txt','myProject-custom-1.2/dir/file2.txt','myProject-custom-1.2/docs/file3.txt','myProject-custom-1.2/docs/dir2/file4.txt')
     }
 
  }

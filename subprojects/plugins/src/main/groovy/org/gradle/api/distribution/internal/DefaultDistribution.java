@@ -15,14 +15,22 @@
  */
 package org.gradle.api.distribution.internal;
 
+import groovy.lang.Closure;
 import org.gradle.api.distribution.Distribution;
+import org.gradle.api.file.CopySpec;
+import org.gradle.api.internal.file.copy.CopySpecImpl;
+import org.gradle.util.ConfigureUtil;
 
 /**
  * Allow user to declare a distribution.
  * @author scogneau
  */
 public class DefaultDistribution implements Distribution {
-    private String name;
+    private final String name;
+
+    private String baseName;
+
+    private CopySpecImpl contents;
 
     public DefaultDistribution(String name) {
         this.name = name;
@@ -30,5 +38,32 @@ public class DefaultDistribution implements Distribution {
 
     public String getName() {
         return name;
+    }
+
+    @Override
+    public String getBaseName() {
+        return baseName;
+    }
+
+    @Override
+    public void setBaseName(String baseName) {
+        this.baseName = baseName;
+    }
+
+    @Override
+    public CopySpec getContents() {
+        return contents;
+    }
+
+    @Override
+    public void setContents(CopySpec contents) {
+        this.contents = (CopySpecImpl) contents;
+    }
+
+    @Override
+    public CopySpec contents(Closure contents) {
+        CopySpecImpl child = this.contents.addChild();
+        ConfigureUtil.configure(contents, child);
+        return this.contents;
     }
 }

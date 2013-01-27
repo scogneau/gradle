@@ -32,7 +32,7 @@ class JavaLibraryDistributionIntegrationTest extends WellBehavedPluginTest {
         createDir('libs') {
             file 'a.jar'
         }
-        createDir('src/dist') {
+        createDir('src/main/dist') {
             file 'file1.txt'
             dir2 {
                 file 'file2.txt'
@@ -43,8 +43,13 @@ class JavaLibraryDistributionIntegrationTest extends WellBehavedPluginTest {
         and:
         buildFile << """
 		apply plugin:'java-library-distribution'
-            distribution{
-				name ='SuperApp'
+
+		    version = 1.2
+
+            distributions{
+                main{
+				    baseName ='SuperApp'
+				}
 			}
 
 			dependencies {
@@ -55,8 +60,8 @@ class JavaLibraryDistributionIntegrationTest extends WellBehavedPluginTest {
         run 'distZip'
         then:
         def expandDir = file('expanded')
-        file('build/distributions/SuperApp.zip').unzipTo(expandDir)
-        expandDir.assertHasDescendants('lib/a.jar', 'file1.txt', 'dir2/file2.txt', 'canCreateADistributionWithSrcDistRuntime.jar')
+        file('build/distributions/SuperApp-1.2.zip').unzipTo(expandDir)
+        expandDir.assertHasDescendants('canCreateADistributionWithSrcDistRuntime/lib/a.jar', 'canCreateADistributionWithSrcDistRuntime/file1.txt', 'canCreateADistributionWithSrcDistRuntime/dir2/file2.txt', 'canCreateADistributionWithSrcDistRuntime/canCreateADistributionWithSrcDistRuntime-1.2.jar')
     }
 
     def canCreateADistributionWithReasonableDefaults() {
@@ -78,21 +83,24 @@ class JavaLibraryDistributionIntegrationTest extends WellBehavedPluginTest {
         then:
         def expandDir = file('expanded')
         file('build/distributions/DefaultJavaDistribution.zip').unzipTo(expandDir)
-        expandDir.assertHasDescendants('lib/a.jar', 'DefaultJavaDistribution.jar')
+        expandDir.assertHasDescendants('DefaultJavaDistribution/lib/a.jar', 'DefaultJavaDistribution/DefaultJavaDistribution.jar')
     }
 
     def failWithNullConfiguredDistributionName() {
         when:
         buildFile << """
             apply plugin:'java-library-distribution'
-            distribution{
-                name = null
+            distributions{
+                main{
+                    baseName = null
+                }
             }
             """
         then:
         runAndFail 'distZip'
-        failure.assertThatDescription(containsString("Distribution name must not be null or empty ! Check your configuration of the distribution plugin."))
+        failure.assertThatDescription(containsString("Distribution baseName must not be null or empty ! Check your configuration of the distribution plugin."))
     }
+
 
     def canCreateADistributionIncludingOtherFile() {
         given:
@@ -116,26 +124,29 @@ class JavaLibraryDistributionIntegrationTest extends WellBehavedPluginTest {
         and:
         buildFile << """
 		apply plugin:'java-library-distribution'
-            distribution{
-				name ='SuperApp'
+            distributions{
+                main{
+				    baseName ='SuperApp'
+				    contents {
+				        from  'other'
+				        from ('other2'){
+				            into('other2')
+				        }
+
+				    }
+				}
 			}
 
 			dependencies {
 				runtime files('libs/a.jar')
 			}
 
-			distZip{
-				from('other')
-				from('other2'){
-					into('other2')
-				}
-			}
         """
         when:
         run 'distZip'
         then:
         def expandDir = file('expanded')
         file('build/distributions/SuperApp.zip').unzipTo(expandDir)
-        expandDir.assertHasDescendants('lib/a.jar', 'file1.txt', 'dir2/file2.txt', 'canCreateADistributionIncludingOtherFile.jar', 'file3.txt', 'other2/file4.txt')
+        expandDir.assertHasDescendants('canCreateADistributionIncludingOtherFile/lib/a.jar', 'canCreateADistributionIncludingOtherFile/file1.txt', 'canCreateADistributionIncludingOtherFile/dir2/file2.txt', 'canCreateADistributionIncludingOtherFile/canCreateADistributionIncludingOtherFile.jar', 'canCreateADistributionIncludingOtherFile/file3.txt', 'canCreateADistributionIncludingOtherFile/other2/file4.txt')
     }
 }
